@@ -1,0 +1,16 @@
+# Normaliza fim de linha: LF no repositorio, nativo no working tree
+* text=auto
+
+# Forca LF: quebram se chegarem com CRLF em container Linux
+*.sh          text eol=lf
+Makefile      text eol=lf
+Dockerfile*   text eol=lf
+*.yml         text eol=lf
+*.yaml        text eol=lf
+
+# Binarios: nunca normalizar
+*.xlsx        binary
+*.parquet     binary
+*.joblib      binary
+*.png         binary
+*.ipynb       -text

@@ -1,0 +1,17 @@
+# requirements-app.lock
+# Dependencias de RUNTIME da interface (Dockerfile.app). A interface e cliente
+# HTTP da API: nao instala scikit-learn, mlflow nem prometheus-client, e nunca
+# carrega o modelo.
+#
+# [VERSAO] Pins diretos definidos na etapa 6 sem acesso ao PyPI. Regenerar o
+# grafo completo com hashes na maquina de desenvolvimento:
+#   pip-compile --generate-hashes --strip-extras -o requirements-app.lock requirements-app.in
+#
+# Python 3.11.
+numpy==1.26.4
+pandas==2.2.3
+pydantic==2.9.2
+pydantic-settings==2.6.1
+PyYAML==6.0.2
+httpx==0.27.2
+streamlit==1.40.1

@@ -1,0 +1,162 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hypertension-mlops"
+version = "0.1.0"
+description = "Produtizacao do modelo preditivo de hipertensao arterial (Dias, 2024): pipeline, API, interface e monitoramento local."
+readme = "README.md"
+requires-python = ">=3.11,<3.12"
+license = { file = "LICENSE" }
+authors = [{ name = "Jaqueline Lopes Dias" }]
+# Dependencias com pin exato vivem em requirements-*.lock. Aqui ficam apenas as
+# faixas minimas para instalacao editavel (pip install -e .).
+dependencies = [
+  "pydantic>=2.7",
+  "pydantic-settings>=2.3",
+  "PyYAML>=6.0",
+]
+
+[tool.setuptools.packages.find]
+include = ["src*"]
+
+# ---------------------------------------------------------------- ruff
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["src", "tests", "scripts"]
+extend-exclude = ["notebooks", "data", "evidencias", "mlruns", "artifacts"]
+
+[tool.ruff.lint]
+select = [
+  "E", "W",   # pycodestyle
+  "F",        # pyflakes
+  "I",        # isort
+  "B",        # bugbear
+  "UP",       # pyupgrade
+  "N",        # pep8-naming
+  "D",        # pydocstyle (NumPy convention)
+  "ANN",      # type annotations obrigatorios
+  "S",        # bandit-like
+  "T20",      # nenhum print
+  "PL",       # pylint subset
+  "RUF",
+]
+ignore = [
+  "D100", "D104",   # docstring de modulo e pacote opcionais (ja cobertos onde relevante)
+  "D203", "D213",   # conflitam com D211/D212 na convencao numpy
+  "PLR0913",        # muitos argumentos: decidido caso a caso
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["src"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101", "D", "ANN", "PLR2004"]   # assert, docstrings e magic numbers em testes
+"scripts/**" = ["T20"]                          # scripts de linha de comando podem imprimir
+"scripts/freeze_notebook_reference.py" = ["ANN401"]  # re-executes an untyped legacy module
+"scripts/make_data_dictionary.py" = ["E501", "RUF001"]   # gerador de Markdown: linhas de tabela longas
+"src/features/transformer.py" = ["N803"]        # X e a convencao de assinatura do scikit-learn
+"src/models/registry.py" = ["D102"]             # metodos documentados no Protocol ExperimentTracker
+"src/app/validation.py" = ["ANN401"]            # valores brutos de CSV e formulario sao Any por natureza
+"src/app/main.py" = ["D103"]                    # paginas Streamlit: docstring de modulo descreve o fluxo
+
+# ---------------------------------------------------------------- black
+[tool.black]
+line-length = 100
+target-version = ["py311"]
+extend-exclude = "^/(notebooks|data|evidencias|mlruns|artifacts)/"
+
+# ---------------------------------------------------------------- mypy
+[tool.mypy]
+python_version = "3.11"
+strict = true
+warn_unreachable = true
+show_error_codes = true
+pretty = true
+files = ["src", "tests"]
+plugins = ["pydantic.mypy"]
+exclude = ["notebooks/", "data/", "evidencias/"]
+
+[[tool.mypy.overrides]]
+# Bibliotecas sem stubs ou sem py.typed. pandas-stubs foi avaliado e descartado
+# nesta etapa: seus tipos divergem entre versoes de pandas e tornariam o gate
+# dependente do ambiente; a fronteira com pandas e coberta por testes.
+module = ["yaml", "yaml.*", "pandas", "pandas.*", "sklearn", "sklearn.*", "joblib", "joblib.*",
+          "scipy", "scipy.*", "pyarrow", "pyarrow.*", "matplotlib", "matplotlib.*",
+          "mlflow", "mlflow.*", "xgboost", "xgboost.*", "lightgbm", "lightgbm.*", "catboost", "catboost.*",
+          "hypothesis", "hypothesis.*", "fastapi", "fastapi.*", "prometheus_client",
+          "prometheus_client.*", "schemathesis", "schemathesis.*", "streamlit", "streamlit.*",
+          "psutil", "psutil.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+# Decoradores de Hypothesis, FastAPI e schemathesis aparecem como nao tipados
+# quando a biblioteca esta ausente do ambiente de verificacao
+module = [
+    "tests.unit.test_derivations_property", "src.api.main", "src.api.model_routes",
+    "tests.contract.*",
+    "src.app.main", "tests.integration.test_streamlit_app",
+]
+disallow_untyped_decorators = false
+disallow_untyped_calls = false
+warn_unused_ignores = false
+
+[tool.pydantic-mypy]
+init_forbid_extra = true
+init_typed = true
+warn_required_dynamic_aliases = true
+
+# ---------------------------------------------------------------- pytest
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# -p no:unraisableexception: starlette's TestClient leaves anyio memory streams
+# unclosed, and their ResourceWarning is emitted from __del__, so pytest reports it as
+# PytestUnraisableExceptionWarning during whatever test happens to trigger the garbage
+# collector. The leak belongs to the test client, not to src/, and the non-deterministic
+# attribution made unrelated tests fail. Warnings raised normally are still errors.
+addopts = "-ra --strict-markers --strict-config -p no:unraisableexception"
+# Politica de avisos. "error" e o padrao: FutureWarning e UserWarning de pandas, numpy e
+# scikit-learn afetam a fidelidade e precisam falhar. Depreciacoes (DeprecationWarning e
+# subclasses, como PyparsingDeprecationWarning) sao ignoradas quando atribuidas a
+# bibliotecas de terceiros, porque dependem da versao transitiva resolvida no ambiente
+# (anyio x starlette, pyparsing x matplotlib) e nao dizem nada sobre o pipeline; voltam a
+# ser erro quando atribuidas a src/ ou tests/, ou seja, quando o nosso codigo chama API
+# depreciada. A ultima regra que casa e a que vale.
+filterwarnings = [
+  "error",
+  "ignore::DeprecationWarning",
+  "ignore::PendingDeprecationWarning",
+  "error::DeprecationWarning:src(\\..*)?$",
+  "error::DeprecationWarning:tests(\\..*)?$",
+  "error::PendingDeprecationWarning:src(\\..*)?$",
+]
+markers = [
+  "integration: testes que executam o pipeline sobre a fixture sintetica",
+  "contract: testes de contrato da API",
+  "slow: testes que precisam do dado real ou de container",
+]
+
+# ---------------------------------------------------------------- coverage
+[tool.coverage.run]
+source = ["src"]
+branch = true
+omit = ["src/app/main.py"]   # paginas Streamlit: cobertas pelo smoke test headless, fora do gate numerico
+
+[tool.coverage.report]
+fail_under = 80
+show_missing = true
+skip_covered = false
+exclude_lines = ["pragma: no cover", "if __name__ == .__main__.:", "if TYPE_CHECKING:"]
+
+[tool.coverage.xml]
+output = "evidencias/coverage.xml"
+
+# ---------------------------------------------------------------- bandit
+[tool.bandit]
+exclude_dirs = ["tests", "notebooks", "data", "evidencias"]
+skips = []

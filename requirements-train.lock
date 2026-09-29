@@ -1,0 +1,24 @@
+# requirements-train.lock
+# Ambiente de TREINO e de desenvolvimento local (conda/venv no Windows).
+# Superconjunto de requirements-api.lock mais as bibliotecas de modelagem
+# comparativa, tracking completo e interface.
+#
+# [VERSAO] Pins diretos definidos na etapa 1 sem acesso ao PyPI. Regenerar com:
+#   pip-compile --generate-hashes --strip-extras -o requirements-train.lock requirements-train.in
+#
+# Python 3.11 (o pyproject exige >=3.11,<3.12; em 3.12 a instalacao falha).
+#
+# Removidas na etapa 7, nenhuma era importada por src/, tests/ ou scripts/:
+#   great-expectations  exige pandas<2.2 e conflitava com pandas==2.2.3; o gate de
+#                       qualidade e proprio, em Pydantic (src/data/quality.py, ADR 0012)
+#   shap                explicabilidade por contribuicoes lineares (ADR 0003)
+#   imbalanced-learn    SMOTE descartado na dissertacao; usa-se class_weight
+#   Boruta              selecao por Boruta descartada; o conjunto e o do filtro
+#   seaborn             as figuras sao geradas com matplotlib puro (src/models/plots.py)
+-r requirements-api.lock
+mlflow==2.17.2
+xgboost==2.1.2
+lightgbm==4.5.0
+catboost==1.2.7
+matplotlib==3.9.2
+streamlit==1.40.1

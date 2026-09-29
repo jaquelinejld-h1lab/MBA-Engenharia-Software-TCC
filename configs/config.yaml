@@ -1,0 +1,346 @@
+# Configuracao unica do pipeline de hipertensao (Dias, 2024 -> produtizacao).
+# Todo parametro numerico do inventario (docs/00_inventario_artefatos_originais.md)
+# vive aqui. Nenhum modulo em src/ pode conter magic numbers.
+# Carregada e validada por src/config.py (pydantic-settings). Sobrescrita por
+# variavel de ambiente com prefixo HTN_ e separador "__" (ex.: HTN_LOGGING__LEVEL=DEBUG).
+
+project:
+  name: hypertension-mlops
+  # Seed unica, aplicada a random, numpy e a cada estimador (inventario, item R7).
+  seed: 42
+
+logging:
+  level: INFO          # DEBUG | INFO | WARNING | ERROR
+  json_format: true    # false apenas para depuracao local
+
+paths:
+  # Todos relativos a raiz do projeto (src/paths.py). Nenhum caminho absoluto.
+  raw_dataset: data/raw/EXAMES-PNS-2013-FINAL_05052023.xlsx
+  interim_dir: data/interim
+  processed_dir: data/processed
+  evidence_dir: evidencias
+  golden_metrics: evidencias/golden_metrics.json
+  fase0_reference_metrics: evidencias/fase0_reexecucao_metricas.json
+  variable_mapping: configs/variable_mapping.yaml
+  mlflow_tracking_uri: mlruns          # backend em arquivo, local
+  artifacts_dir: artifacts
+
+data:
+  # Identidade do dado bruto (inventario, secao 3.1). Ingestao falha se divergir.
+  raw_sha256: 80222fa535524829d531504109ac4b49d44e4e6d0c04c3c281ff972bd332d1f7
+  raw_sheet: EXAMES-PNS-2013-FINAL_com-ponde
+  expected_raw_rows: 8952
+  expected_raw_columns: 509
+  expected_rows_after_filters: 6203
+  source: "PNS 2013, IBGE, modulo de exames laboratoriais"
+  freeze_date: "2023-05-05"           # data no nome do arquivo; confirmar no dicionario de dados
+
+population_filters:
+  # Ordem exata do notebook (inventario, secao 3.2). Contagens esperadas ao lado.
+  consent_column: Z051
+  consent_keep_value: 1               # remove 1016
+  pregnancy_column: P005
+  pregnancy_drop_values: [1, 3]       # remove 101
+  hypertension_pregnancy_only_column: Q002
+  hypertension_pregnancy_only_drop_value: 2   # remove 118
+  medication_column: Q006
+  medication_drop_value: 1            # remove 1501
+  region_column: REGIAO               # linhas com regiao nula removidas: 6
+  empty_questionnaire_proxy_column: P006   # linhas com feijao_dias nulo removidas: 7
+  expected_removed: [1016, 101, 118, 1501, 6, 7]
+
+target:
+  # P5: PAS >= 140 ou PAD >= 90, sem diagnostico autorreferido nem medicacao.
+  systolic_column: W00407
+  diastolic_column: W00408
+  systolic_threshold_mmhg: 140
+  diastolic_threshold_mmhg: 90
+  # Correcao D1: registro sem PA e excluido explicitamente antes do alvo.
+  drop_if_blood_pressure_missing: true
+  expected_prevalence: 0.1704
+
+split:
+  test_size: 0.20
+  stratify: true
+  n_splits: 10                        # StratifiedKFold, shuffle=True, random_state=seed
+  cv_on_full_development_set: true    # P6: CV sobre as 6203 linhas, holdout como complemento
+
+features:
+  income:
+    minimum_wage_brl: 678.00          # salario minimo de 2013 usado no notebook
+    # multiplos do salario minimo; bins = [0, 0.25, 0.5, 1, 2, 3, 5, 10, 20, inf) * SM
+    bracket_multipliers: [0.25, 0.5, 1, 2, 3, 5, 10, 20]
+    missing_income_as_zero: true      # D7: ausente vira zero, reproduzido
+  age:
+    bin_edges: [18, 30, 40, 50, 60, 70, 80, 105]
+    labels: ["18-29", "30-39", "40-49", "50-59", "60-69", "70-79", "80+"]
+  household_size:
+    bin_edges: [1, 2, 3, 4, 5, 6, .inf]
+    labels: ["1", "2", "3", "4", "5", "6+"]
+  bmi:
+    # classificar_imc: >=40 '4', >=30 '3', >=25 '2', >=18.5 '1', senao '5'
+    underweight_below: 18.5
+    overweight_from: 25.0
+    obesity_from: 30.0
+    severe_obesity_from: 40.0
+    height_unit_divisor: 100          # altura em cm -> m
+  waist:
+    # usadas apenas na imputacao KNN (cintura_risco_aumentado)
+    female_increased_cm: 80
+    female_greatly_increased_cm: 88
+    male_increased_cm: 94
+    male_greatly_increased_cm: 102
+  physical_activity:
+    minutes_per_exercise_day: 30      # premissa do notebook
+    low_activity_below_min: 150
+    vigorous_min_minutes: 75
+    moderate_min_minutes: 150
+    moderate_to_vigorous_min_minutes: 300
+    moderate_exercise_types: [1, 2, 7, 8, 11, 16]
+    vigorous_exercise_types: [3, 4, 5, 6, 9, 10, 12, 13, 14, 15]
+  food_frequency:
+    max_days_per_week: 7              # D10: acima disso e erro explicito, nao fallback
+    # consumo_saudavel: 7 -> '1'; 5..6 -> '2'; 3..4 -> '3'; senao '4'
+    healthy_very_days: 7
+    healthy_min_days: 5
+    moderate_min_days: 3
+    # consumo_peixe: >=3 '1'; 2 '2'; 1 '3'; 0 '4'
+    fish_very_healthy_min_days: 3
+    # consumo_suco_frutas: 0..1 '1'; 2..3 '2'; 4..5 '3'; 6..7 '4'
+    juice_edges: [1, 3, 5, 7]
+    # consumo_doce: 0 '1'; 1 '2'; 2..3 '3'; >=4 '4'
+    sweets_unhealthy_from_days: 4
+    # classificar_substituir_ref: 0 '1'; 1 '2'; 2 '3'; >=3 '4'
+    meal_replacement_unhealthy_from_days: 3
+  laboratory:
+    knn_imputer_neighbors: 5
+    egfr_bin_edges: [0, 30, 45, 60, 90, .inf]
+    egfr_labels: ["5", "4", "3", "2", "1"]
+    cholesterol_desirable_below_mg_dl: 190
+    glucose_bin_edges: [0, 70, 100, 126, .inf]
+    glucose_labels: ["4", "1", "2", "3"]
+    # Categoricas usadas como base da imputacao (inventario 1.2), em nomes do codigo:
+    # faixa_etaria, sexo, regiao, faixa_renda_sl, nivel_atv_fisica, etnia, diag_renalc,
+    # diag_diab_rec, cintura_risco_aumentado, diag_colest_rec, diag_dcore, med_dormir
+    imputation_base_variables:
+      [age_group, sex, region, income_bracket, physical_activity_level, race_color,
+       dx_chronic_kidney, dx_diabetes_rec, waist_risk_increased, dx_high_cholesterol_rec,
+       dx_heart_disease, sleep_medication]
+  smoking:
+    # P1: bug de fumante_hist reproduzido intencionalmente. Ver docs/adr.
+    reproduce_string_int_comparison_bug: true
+  encoding:
+    drop_first: true
+    expected_encoded_columns: 86      # 85 dummies + target
+
+model:
+  champion:
+    algorithm: LogisticRegression
+    params:
+      C: 1.0
+      solver: liblinear
+      class_weight: balanced
+      max_iter: 100
+    scale_features: false             # inventario, divergencia 7
+  decision_threshold: 0.5
+  risk_bands:
+    # faixas para a interface; limites iniciais, revisar na etapa 6
+    low_below: 0.30
+    high_from: 0.60
+  transformer_mode: production        # fidelity | production (P2)
+  # Piso clinico: contagem de fatores de risco classicos, sem aprendizado. Codigos
+  # conforme a PNS 2013 e as derivadas do estudo (1 = sim, 2 = nao).
+  rule_baseline:
+    positive_from: 2                  # risco a partir de dois fatores presentes
+    factors:
+      - {variable: age_group, label_pt: Idade de 50 anos ou mais, categories: ['50-59', '60-69', '70-79', '80+']}
+      - {variable: bmi_class, label_pt: Sobrepeso ou obesidade, categories: ['2', '3', '4']}
+      - {variable: dx_diabetes_rec, label_pt: Diagnostico de diabetes, categories: ['1']}
+      - {variable: physical_activity_level, label_pt: Atividade fisica insuficiente, categories: ['1', '2']}
+      - {variable: smoking_history, label_pt: Historico de tabagismo, categories: ['1']}
+  interpretation:
+    # Leitura global persistida junto de cada modelo linear (interpretation.json).
+    top_dummies: 20                   # dummies no beeswarm de contribuicoes
+    max_contribution_rows: 600        # teto de observacoes do holdout na amostra
+  # Runs do experimento (etapa 3). Cada run = algoritmo + modo do transformador +
+  # variante de features. Hiperparametros dos concorrentes: evaluate_models_cv do
+  # notebook original. "auto" em pos_weight = n_neg / n_pos do conjunto de treino.
+  runs:
+    - name: lr_fidelity
+      algorithm: LogisticRegression
+      transformer_mode: fidelity
+      smoking_bug_reproduced: true
+      role: fidelity
+      params: {C: 1.0, solver: liblinear, class_weight: balanced, max_iter: 100}
+    - name: lr_production
+      algorithm: LogisticRegression
+      transformer_mode: production
+      smoking_bug_reproduced: true
+      role: champion
+      params: {C: 1.0, solver: liblinear, class_weight: balanced, max_iter: 100}
+    - name: lr_smoking_fixed
+      algorithm: LogisticRegression
+      transformer_mode: production
+      smoking_bug_reproduced: false
+      role: comparison
+      params: {C: 1.0, solver: liblinear, class_weight: balanced, max_iter: 100}
+    - name: lr_baseline_unweighted
+      algorithm: LogisticRegression
+      transformer_mode: production
+      smoking_bug_reproduced: true
+      role: baseline
+      params: {C: 1.0, solver: lbfgs, class_weight: none, max_iter: 1000}
+    - name: random_forest
+      algorithm: RandomForestClassifier
+      transformer_mode: production
+      smoking_bug_reproduced: true
+      role: candidate
+      params: {n_estimators: 100, max_depth: none, min_samples_split: 2, min_samples_leaf: 1, class_weight: balanced}
+    - name: xgboost
+      algorithm: XGBClassifier
+      transformer_mode: production
+      smoking_bug_reproduced: true
+      role: candidate
+      params: {learning_rate: 0.1, max_depth: 6, min_child_weight: 1, gamma: 0, colsample_bytree: 0.8, n_estimators: 100, scale_pos_weight: auto}
+    - name: lightgbm
+      algorithm: LGBMClassifier
+      transformer_mode: production
+      smoking_bug_reproduced: true
+      role: candidate
+      params: {learning_rate: 0.1, max_depth: -1, num_leaves: 31, min_child_samples: 20, subsample: 1.0, colsample_bytree: 1.0, n_estimators: 100, class_weight: balanced, verbosity: -1}
+    - name: mlp
+      algorithm: MLPClassifier
+      transformer_mode: production
+      smoking_bug_reproduced: true
+      role: candidate
+      params: {hidden_layer_sizes: [100], activation: relu, solver: adam, alpha: 0.0001, learning_rate: constant, max_iter: 1000}
+    - name: catboost
+      algorithm: CatBoostClassifier
+      transformer_mode: production
+      smoking_bug_reproduced: true
+      role: candidate
+      params: {learning_rate: 0.1, depth: 6, l2_leaf_reg: 3, bagging_temperature: 1, random_strength: 1, n_estimators: 100, class_weights: auto, silent: true}
+    - name: svm
+      algorithm: SVC
+      transformer_mode: production
+      smoking_bug_reproduced: true
+      role: candidate
+      params: {C: 1.0, kernel: rbf, gamma: scale, class_weight: balanced, probability: true}
+
+tracking:
+  backend: mlflow                     # mlflow | json (fallback sem MLflow)
+  experiment_name: hypertension-dias2024
+  registered_model_name: hypertension-lr
+  sqlite_path: mlruns/mlflow.db       # relativo a raiz; URI montada em tempo de execucao
+  artifact_root: mlruns/artifacts
+  json_runs_dir: evidencias/runs
+  promote_run: lr_production          # run promovida a Production (decisao P2)
+  promote_stage: Production
+  promote_alias: champion
+
+fidelity:
+  # Referencia: reexecucao da Fase 0 (evidencias/fase0_reexecucao_metricas.json).
+  # Golden values oficiais: primeira execucao no ambiente travado (P4).
+  auc_tolerance: 0.005
+  sensitivity_tolerance: 0.01
+  reference_auc_cv: 0.748804
+  reference_sensitivity_cv: 0.681339
+
+acceptance:
+  # OE5 do projeto
+  min_auc: 0.73
+  min_sensitivity: 0.65
+  max_p95_latency_ms: 200
+  slo_p95_latency_ms: 300
+  subgroup_min_size: 100              # subgrupo menor que isso e reportado sem metricas
+
+monitoring:
+  drift:
+    # valores iniciais de mercado; revisar com os cenarios da etapa 6
+    psi_warning: 0.10
+    psi_alert: 0.25
+    ks_statistic_alert: 0.10
+    ks_pvalue_alert: 0.05
+    psi_bins: 10
+    epsilon: 0.0001                   # suavizacao de proporcoes nulas no PSI
+    ks_min_rows: 30                   # KS so com pelo menos 30 valores nao nulos em cada janela
+  # Retreino: uma variavel em alerta e ruido de amostra; varias ao mesmo tempo indicam
+  # que a populacao mudou. A flag recomenda, o runbook executa.
+  retraining:
+    min_variables_in_alert: 3
+    flag_file: retraining_flag.json
+  reference_window: train             # janela de referencia: conjunto de treino
+  reference_file: drift_reference.json  # persistido no diretorio do run promovido
+  # Janela deslizante de observacoes recebidas pela API (em memoria) sobre a qual
+  # PSI e KS sao calculados a cada raspagem de /metrics.
+  window_size: 2000
+  min_rows_for_drift: 100
+  # Cenarios reprodutiveis (scripts/baseline_scenario.py e scripts/simulate_drift.py).
+  # Janela atual = holdout de 20 %; o cenario simulado aplica os deslocamentos abaixo.
+  scenario_fixture_rows: 8000          # linhas do gerador sintetico quando --fixture (CI)
+  scenarios:
+    baseline:
+      description: Holdout sem alteracao; espera-se nenhuma variavel em alerta.
+      expect_alerts: false
+      numeric_shifts: {}
+      categorical_overrides: {}
+    simulated:
+      description: Envelhecimento, ganho de peso, hiperglicemia e concentracao regional.
+      expect_alerts: true
+      numeric_shifts:
+        age: {add: 15.0}
+        weight_kg: {multiply: 1.20}
+        glucose: {add: 30.0}
+      categorical_overrides:
+        region: {code: 3, share: 0.80}   # 80 % das linhas passam a Sudeste
+
+api:
+  host: 0.0.0.0
+  port: 8000
+  model_stage: Production
+  # Origem do modelo servido: "mlflow" (registry, alias tracking.promote_alias) ou
+  # "local" (pipeline.joblib do run promovido em artifacts/). Sobrescreva com
+  # HTN_API__MODEL_SOURCE.
+  model_source: local
+  local_run_dir: artifacts/lr_production
+  batch_max_records: 1000
+  top_contributions: 5
+  # Coeficientes devolvidos por /model/importance, ordenados por |coeficiente|.
+  top_coefficients: 20
+  # Pontos por curva ROC devolvidos por /model/roc. As curvas tem centenas de pontos e
+  # sao afinadas por passo fixo para manter a resposta pequena sem mudar o desenho.
+  roc_max_points: 200
+  risk_band_labels: {low: baixo, moderate: moderado, high: alto}
+  clinical_disclaimer: >-
+    Esta saida e apoio a decisao e nao substitui avaliacao e julgamento clinico
+    de profissional de saude.
+
+app:
+  # Streamlit e cliente HTTP puro da API; sobrescreva com HTN_APP__API_URL.
+  api_url: http://localhost:8000
+  prometheus_url: http://localhost:9090   # opcional: serie temporal de p95 no painel
+  request_timeout_seconds: 10
+  batch_chunk_size: 500                   # <= api.batch_max_records
+  # Variaveis destacadas no formulario: maior importancia global do campeao
+  # (media do |coef * x| no treino por variavel do modelo, somada as variaveis
+  # brutas de origem; evidencias/global_importance.json).
+  highlighted_variables: [age, dx_heart_disease, region, sex, dx_stroke, weight_kg, height_cm, sleep_medication]
+  top_contributions: 5
+
+load_test:
+  # Condicao de carga em que o SLO e declarado: 4 clientes concorrentes sobre um
+  # unico worker (UVICORN_WORKERS=1, janela de drift e metricas em um so processo).
+  # Medido no sandbox de desenvolvimento (evidencias/load_test_local_stub_c*.md):
+  # p95 = 40 ms (1 cliente), 150 ms (4), 340 ms (8) com ~30 req/s por worker.
+  requests: 1000
+  concurrency: 4
+  warmup_requests: 20
+  sample_interval_seconds: 0.5
+  # Premissa de custo, nao medicao: valor horario de uma maquina equivalente a que serve
+  # a API. Serve so para converter duracao em custo por mil requisicoes, e a base fica
+  # registrada junto do numero para que o leitor possa trocar a premissa.
+  cost_per_hour: 0.50
+  cost_currency: USD
+  cost_basis: >-
+    2 vCPU e 4 GiB sob demanda, preco de referencia de nuvem publica em 2026; execucao
+    local nao tem custo de infraestrutura, o valor existe para tornar a conta explicita

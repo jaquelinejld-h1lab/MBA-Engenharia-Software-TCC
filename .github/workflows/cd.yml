@@ -1,0 +1,61 @@
+name: cd
+
+# Release em tag semântica: constrói as imagens, gera o pacote de evidências e cria a
+# release no GitHub com as notas a partir dos commits. Sem push de imagem para
+# registry (não há ambiente de destino fora da máquina local); as imagens ficam como
+# artefatos da execução.
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+env:
+  PYTHON_VERSION: "3.11"
+
+jobs:
+  release:
+    name: build images and publish release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build API image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/Dockerfile.api
+          push: false
+          load: true
+          tags: hypertension-api:${{ github.ref_name }}
+
+      - name: Build interface image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/Dockerfile.app
+          push: false
+          load: true
+          tags: hypertension-app:${{ github.ref_name }}
+
+      - name: Save images
+        run: |
+          docker save hypertension-api:${{ github.ref_name }} | gzip > hypertension-api-${{ github.ref_name }}.tar.gz
+          docker save hypertension-app:${{ github.ref_name }} | gzip > hypertension-app-${{ github.ref_name }}.tar.gz
+
+      - name: Package evidence and documentation
+        run: |
+          zip -r evidencias-${{ github.ref_name }}.zip evidencias docs configs README.md
+
+      - name: Publish GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: |
+            evidencias-${{ github.ref_name }}.zip
+            hypertension-api-${{ github.ref_name }}.tar.gz
+            hypertension-app-${{ github.ref_name }}.tar.gz

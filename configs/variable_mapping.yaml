@@ -1,0 +1,1290 @@
+# Gerado a partir das tabelas 3.3 e 3.4 do inventario (docs/00_inventario_artefatos_originais.md).
+# Regras: 'en' e o unico nome usado em src/; 'pt' e o nome do funcoes_mecai_v3.py; 'pns' e o codigo do IBGE.
+# null_share_max alimenta o gate de qualidade de dados (observado + 0,10; zero quando a variavel nunca e nula).
+# value_labels_pt: rotulos dos codigos conforme o dicionario da PNS 2013 (uso exclusivo da interface).
+version: 2
+description: Mapa explicito PNS 2013 -> nome do .py original (pt) -> nome no codigo (en). Fonte unica de nomes,
+  dominios e categorias. Nenhuma traducao implicita no codigo.
+auxiliary_variables:
+- pns: Z051
+  pt: questionario
+  en: lab_consent
+  role: filter
+  domain:
+    type: categorical
+    values: [1, 2, 3]
+- pns: P005
+  pt: gravida
+  en: pregnant
+  role: filter
+  domain:
+    type: categorical
+    values: [1, 2, 3]
+- pns: Q002
+  pt: diag_ha
+  en: dx_hypertension
+  role: filter
+  domain:
+    type: categorical
+    values: [1, 2, 3]
+- pns: Q006
+  pt: remed_ha
+  en: hypertension_medication
+  role: filter
+  domain:
+    type: categorical
+    values: [1, 2]
+- pns: W00407
+  pt: pa_sistolica
+  en: systolic_bp
+  role: target
+  domain: {type: numeric, min: 50, max: 300}
+- pns: W00408
+  pt: pa_distolica
+  en: diastolic_bp
+  role: target
+  domain: {type: numeric, min: 30, max: 200}
+raw_variables:
+- pns: Z002
+  pt: idade
+  en: age
+  kind: questionnaire
+  dtype: int
+  block: socio
+  label_pt: Idade
+  unit: anos
+  nullable: false
+  null_share_observed: 0.0
+  null_share_max: 0.0
+  domain: {type: numeric, min: 18, max: 104}
+  observed: {min: 18.0, max: 104.0, median: 42.0}
+- pns: Z001
+  pt: sexo
+  en: sex
+  kind: questionnaire
+  dtype: int
+  block: socio
+  label_pt: Sexo
+  unit: null
+  nullable: false
+  null_share_observed: 0.0
+  null_share_max: 0.0
+  domain:
+    type: categorical
+    values: [1, 2]
+  observed: {mode: 2.0}
+  value_labels_pt: {1: Homem, 2: Mulher}
+- pns: REGIAO
+  pt: regiao
+  en: region
+  kind: questionnaire
+  dtype: int
+  block: socio
+  label_pt: Região de residência
+  unit: null
+  nullable: false
+  null_share_observed: 0.0
+  null_share_max: 0.0
+  domain:
+    type: categorical
+    values: [1, 2, 3, 4, 5]
+  observed: {mode: 2.0}
+  value_labels_pt: {1: Norte, 2: Nordeste, 3: Sudeste, 4: Sul, 5: Centro-Oeste}
+- pns: Z003
+  pt: etnia
+  en: race_color
+  kind: questionnaire
+  dtype: int
+  block: socio
+  label_pt: Cor ou raça
+  unit: null
+  nullable: false
+  null_share_observed: 0.0
+  null_share_max: 0.0
+  domain:
+    type: categorical
+    values: [1, 2, 3, 4, 5, 9]
+  observed: {mode: 4.0}
+  value_labels_pt: {1: Branca, 2: Preta, 3: Amarela, 4: Parda, 5: Indígena, 9: Ignorado}
+- pns: C001
+  pt: num_moradores
+  en: household_size
+  kind: questionnaire
+  dtype: int
+  block: socio
+  label_pt: Número de moradores no domicílio
+  unit: pessoas
+  nullable: false
+  null_share_observed: 0.0
+  null_share_max: 0.0
+  domain: {type: numeric, min: 1, max: 30}
+  observed: {min: 1.0, max: 13.0, median: 3.0}
+- pns: C010
+  pt: conj_comp
+  en: lives_with_spouse
+  kind: questionnaire
+  dtype: int
+  block: socio
+  label_pt: Vive com cônjuge
+  unit: null
+  nullable: false
+  null_share_observed: 0.0
+  null_share_max: 0.0
+  domain:
+    type: categorical
+    values: [1, 2]
+  observed: {mode: 1.0}
+  value_labels_pt: &id001 {1: Sim, 2: Não}
+- pns: E01602
+  pt: vl_trab_mes
+  en: income_main_job
+  kind: questionnaire
+  dtype: float
+  block: socio
+  label_pt: Rendimento mensal do trabalho principal
+  unit: R$
+  nullable: true
+  null_share_observed: 0.3845
+  null_share_max: 0.48
+  domain: {type: numeric, min: 0, max: 200000}
+  observed: {min: 5.0, max: 40000.0, median: 800.0}
+- pns: E01604
+  pt: vl_est_mercad_mes
+  en: income_main_job_in_kind
+  kind: questionnaire
+  dtype: float
+  block: socio
+  label_pt: Rendimento em produtos do trabalho principal
+  unit: R$
+  nullable: true
+  null_share_observed: 0.9948
+  null_share_max: 1.0
+  domain: {type: numeric, min: 0, max: 200000}
+  observed: {min: 40.0, max: 2400.0, median: 300.0}
+- pns: E01802
+  pt: vl_trab_outros_mes
+  en: income_other_jobs
+  kind: questionnaire
+  dtype: float
+  block: socio
+  label_pt: Rendimento de outros trabalhos
+  unit: R$
+  nullable: true
+  null_share_observed: 0.9673
+  null_share_max: 1.0
+  domain: {type: numeric, min: 0, max: 200000}
+  observed: {min: 20.0, max: 15000.0, median: 678.0}
+- pns: E01804
+  pt: vl_trab_est_mercad_mes
+  en: income_other_jobs_in_kind
+  kind: questionnaire
+  dtype: float
+  block: socio
+  label_pt: Rendimento em produtos de outros trabalhos
+  unit: R$
+  nullable: true
+  null_share_observed: 0.9998
+  null_share_max: 1.0
+  domain: {type: numeric, min: 0, max: 200000}
+  observed: {min: 700.0, max: 700.0, median: 700.0}
+- pns: F00102
+  pt: vl_aposent
+  en: income_pension
+  kind: questionnaire
+  dtype: float
+  block: socio
+  label_pt: Aposentadoria ou pensão
+  unit: R$
+  nullable: true
+  null_share_observed: 0.8438
+  null_share_max: 0.94
+  domain: {type: numeric, min: 0, max: 200000}
+  observed: {min: 70.0, max: 17000.0, median: 678.0}
+- pns: F00702
+  pt: vl_pens_al
+  en: income_alimony
+  kind: questionnaire
+  dtype: float
+  block: socio
+  label_pt: Pensão alimentícia ou doação
+  unit: R$
+  nullable: true
+  null_share_observed: 0.9589
+  null_share_max: 1.0
+  domain: {type: numeric, min: 0, max: 200000}
+  observed: {min: 30.0, max: 6000.0, median: 250.0}
+- pns: F00802
+  pt: vl_aluguel
+  en: income_rent
+  kind: questionnaire
+  dtype: float
+  block: socio
+  label_pt: Aluguel ou arrendamento
+  unit: R$
+  nullable: true
+  null_share_observed: 0.9657
+  null_share_max: 1.0
+  domain: {type: numeric, min: 0, max: 200000}
+  observed: {min: 50.0, max: 12000.0, median: 500.0}
+- pns: I001
+  pt: plano_saude
+  en: health_insurance
+  kind: questionnaire
+  dtype: int
+  block: socio
+  label_pt: Possui plano de saúde
+  unit: null
+  nullable: false
+  null_share_observed: 0.0
+  null_share_max: 0.0
+  domain:
+    type: categorical
+    values: [1, 2]
+  observed: {mode: 2.0}
+  value_labels_pt: *id001
+- pns: Q124
+  pt: diag_renalc
+  en: dx_chronic_kidney
+  kind: questionnaire
+  dtype: int
+  block: health
+  label_pt: Diagnóstico de insuficiência renal crônica
+  unit: null
+  nullable: false
+  null_share_observed: 0.0
+  null_share_max: 0.0
+  domain:
+    type: categorical
+    values: [1, 2]
+  observed: {mode: 2.0}
+  value_labels_pt: *id001
+- pns: Q030
+  pt: diag_diab
+  en: dx_diabetes
+  kind: questionnaire
+  dtype: int
+  block: health
+  label_pt: Diagnóstico de diabetes
+  unit: null
+  nullable: true
+  null_share_observed: 0.1486
+  null_share_max: 0.25
+  domain:
+    type: categorical
+    values: [1, 2, 3]
+  observed: {mode: 3.0}
+  value_labels_pt: {1: Sim, 2: Não, 3: Apenas durante a gravidez}
+- pns: Q063
+  pt: diag_dcore
+  en: dx_heart_disease
+  kind: questionnaire
+  dtype: int
+  block: health
+  label_pt: Diagnóstico de doença do coração
+  unit: null
+  nullable: false
+  null_share_observed: 0.0
+  null_share_max: 0.0
+  domain:
+    type: categorical
+    values: [1, 2]
+  observed: {mode: 2.0}
+  value_labels_pt: *id001
+- pns: Q068
+  pt: diag_avc
+  en: dx_stroke
+  kind: questionnaire
+  dtype: int
+  block: health
+  label_pt: Diagnóstico de AVC
+  unit: null
+  nullable: false
+  null_share_observed: 0.0
+  null_share_max: 0.0
+  domain:
+    type: categorical
+    values: [1, 2]
+  observed: {mode: 2.0}
+  value_labels_pt: *id001
+- pns: Q060
+  pt: diag_colest
+  en: dx_high_cholesterol
+  kind: questionnaire
+  dtype: int
+  block: health
+  label_pt: Diagnóstico de colesterol alto
+  unit: null
+  nullable: true
+  null_share_observed: 0.188
+  null_share_max: 0.29
+  domain:
+    type: categorical
+    values: [1, 2]
+  observed: {mode: 2.0}
+  value_labels_pt: *id001
+- pns: P006
+  pt: feijao_dias
+  en: beans_days
+  kind: questionnaire
+  dtype: int
+  block: lifestyle
+  label_pt: Dias por semana que come feijão
+  unit: dias
+  nullable: false
+  null_share_observed: 0.0
+  null_share_max: 0.0
+  domain:
+    type: categorical
+    values: [0, 1, 2, 3, 4, 5, 6, 7]
+  observed: {mode: 7.0}
+  value_labels_pt: &id002 {0: 0 dia(s), 1: 1 dia(s), 2: 2 dia(s), 3: 3 dia(s), 4: 4 dia(s), 5: 5 dia(s), 6: 6 dia(s),
+    7: 7 dia(s)}
+- pns: P007
+  pt: salada_dias
+  en: salad_days
+  kind: questionnaire
+  dtype: int
+  block: lifestyle
+  label_pt: Dias por semana que come salada crua
+  unit: dias
+  nullable: false
+  null_share_observed: 0.0
+  null_share_max: 0.0
+  domain:
+    type: categorical
+    values: [0, 1, 2, 3, 4, 5, 6, 7]
+  observed: {mode: 7.0}
+  value_labels_pt: *id002
+- pns: P009
+  pt: verd_legu_dias
+  en: vegetables_days
+  kind: questionnaire
+  dtype: int
+  block: lifestyle
+  label_pt: Dias por semana que come verduras ou legumes cozidos
+  unit: dias
+  nullable: false
+  null_share_observed: 0.0
+  null_share_max: 0.0
+  domain:
+    type: categorical
+    values: [0, 1, 2, 3, 4, 5, 6, 7]
+  observed: {mode: 0.0}
+  value_labels_pt: *id002
+- pns: P015
+  pt: peixe_dias
+  en: fish_days
+  kind: questionnaire
+  dtype: int
+  block: lifestyle
+  label_pt: Dias por semana que come peixe
+  unit: dias
+  nullable: false
+  null_share_observed: 0.0
+  null_share_max: 0.0
+  domain:
+    type: categorical
+    values: [0, 1, 2, 3, 4, 5, 6, 7]
+  observed: {mode: 0.0}
+  value_labels_pt: *id002
+- pns: P016
+  pt: suco_dias
+  en: juice_days
+  kind: questionnaire
+  dtype: int
+  block: lifestyle
+  label_pt: Dias por semana que toma suco natural
+  unit: dias
+  nullable: false
+  null_share_observed: 0.0
+  null_share_max: 0.0
+  domain:
+    type: categorical
+    values: [0, 1, 2, 3, 4, 5, 6, 7]
+  observed: {mode: 0.0}
+  value_labels_pt: *id002
+- pns: P018
+  pt: frutas_dias
+  en: fruit_days
+  kind: questionnaire
+  dtype: int
+  block: lifestyle
+  label_pt: Dias por semana que come frutas
+  unit: dias
+  nullable: false
+  null_share_observed: 0.0
+  null_share_max: 0.0
+  domain:
+    type: categorical
+    values: [0, 1, 2, 3, 4, 5, 6, 7]
+  observed: {mode: 7.0}
+  value_labels_pt: *id002
+- pns: P021
+  pt: tipo_refri
+  en: soda_type
+  kind: questionnaire
+  dtype: int
+  block: lifestyle
+  label_pt: Tipo de refrigerante ou suco artificial
+  unit: null
+  nullable: true
+  null_share_observed: 0.2847
+  null_share_max: 0.38
+  domain:
+    type: categorical
+    values: [1, 2, 3]
+  observed: {mode: 1.0}
+  value_labels_pt: {1: Normal, 2: 'Diet, light ou zero', 3: Ambos}
+- pns: P024
+  pt: tipo_leite
+  en: milk_type
+  kind: questionnaire
+  dtype: int
+  block: lifestyle
+  label_pt: Tipo de leite
+  unit: null
+  nullable: true
+  null_share_observed: 0.2745
+  null_share_max: 0.37
+  domain:
+    type: categorical
+    values: [1, 2, 3]
+  observed: {mode: 1.0}
+  value_labels_pt: {1: Integral, 2: Desnatado ou semidesnatado, 3: Ambos}
+- pns: P025
+  pt: doces_dias
+  en: sweets_days
+  kind: questionnaire
+  dtype: int
+  block: lifestyle
+  label_pt: Dias por semana que come doces
+  unit: dias
+  nullable: false
+  null_share_observed: 0.0
+  null_share_max: 0.0
+  domain:
+    type: categorical
+    values: [0, 1, 2, 3, 4, 5, 6, 7]
+  observed: {mode: 0.0}
+  value_labels_pt: *id002
+- pns: P026
+  pt: subst_ref_dias
+  en: meal_replacement_days
+  kind: questionnaire
+  dtype: int
+  block: lifestyle
+  label_pt: Dias por semana que substitui almoço ou jantar por lanche
+  unit: dias
+  nullable: false
+  null_share_observed: 0.0
+  null_share_max: 0.0
+  domain:
+    type: categorical
+    values: [0, 1, 2, 3, 4, 5, 6, 7]
+  observed: {mode: 0.0}
+  value_labels_pt: *id002
+- pns: P02601
+  pt: consumo_sal
+  en: salt_intake
+  kind: questionnaire
+  dtype: int
+  block: lifestyle
+  label_pt: Consumo de sal (autoavaliação)
+  unit: null
+  nullable: false
+  null_share_observed: 0.0
+  null_share_max: 0.0
+  domain:
+    type: categorical
+    values: [1, 2, 3, 4, 5]
+  observed: {mode: 3.0}
+  value_labels_pt: {1: Muito alto, 2: Alto, 3: Adequado, 4: Baixo, 5: Muito baixo}
+- pns: P027
+  pt: alcool
+  en: alcohol
+  kind: questionnaire
+  dtype: int
+  block: lifestyle
+  label_pt: Frequência de consumo de bebida alcoólica
+  unit: null
+  nullable: false
+  null_share_observed: 0.0
+  null_share_max: 0.0
+  domain:
+    type: categorical
+    values: [1, 2, 3]
+  observed: {mode: 1.0}
+  value_labels_pt: {1: Nunca, 2: Menos de uma vez por mês, 3: Uma vez ou mais por mês}
+- pns: P034
+  pt: exercicio
+  en: exercise
+  kind: questionnaire
+  dtype: int
+  block: lifestyle
+  label_pt: Praticou exercício ou esporte nos últimos 3 meses
+  unit: null
+  nullable: false
+  null_share_observed: 0.0
+  null_share_max: 0.0
+  domain:
+    type: categorical
+    values: [1, 2]
+  observed: {mode: 2.0}
+  value_labels_pt: *id001
+- pns: P035
+  pt: exercicio_dias
+  en: exercise_days
+  kind: questionnaire
+  dtype: int
+  block: lifestyle
+  label_pt: Dias por semana de exercício
+  unit: dias
+  nullable: true
+  null_share_observed: 0.7047
+  null_share_max: 0.8
+  domain:
+    type: categorical
+    values: [0, 1, 2, 3, 4, 5, 6, 7]
+  observed: {mode: 1.0}
+  value_labels_pt: *id002
+- pns: P036
+  pt: tipo_exercicio
+  en: exercise_type
+  kind: questionnaire
+  dtype: int
+  block: lifestyle
+  label_pt: Tipo principal de exercício
+  unit: null
+  nullable: true
+  null_share_observed: 0.7163
+  null_share_max: 0.82
+  domain:
+    type: categorical
+    values: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]
+  observed: {mode: 1.0}
+  value_labels_pt: {1: Caminhada, 2: Caminhada em esteira, 3: Corrida, 4: Corrida em esteira, 5: Musculação, 6: Ginástica
+      aeróbica, 7: Hidroginástica, 8: Ginástica em geral, 9: Natação, 10: Artes marciais e luta, 11: Bicicleta,
+    12: Futebol, 13: Basquetebol, 14: Voleibol, 15: Tênis, 16: Dança, 17: Outro}
+- pns: P042
+  pt: atv_pe_bk
+  en: walk_bike_days
+  kind: questionnaire
+  dtype: int
+  block: lifestyle
+  label_pt: Dias por semana de deslocamento a pé ou bicicleta para atividades
+  unit: dias
+  nullable: false
+  null_share_observed: 0.0
+  null_share_max: 0.0
+  domain:
+    type: categorical
+    values: [0, 1, 2, 3, 4, 5, 6, 7]
+  observed: {mode: 0.0}
+  value_labels_pt: *id002
+- pns: P04301
+  pt: atv_pe_bk_horas
+  en: walk_bike_hours
+  kind: questionnaire
+  dtype: int
+  block: lifestyle
+  label_pt: Horas por dia desse deslocamento
+  unit: horas
+  nullable: true
+  null_share_observed: 0.625
+  null_share_max: 0.73
+  domain: {type: numeric, min: 0, max: 24}
+  observed: {min: 0.0, max: 8.0, median: 0.0}
+- pns: P04302
+  pt: atv_pe_bk_minutos
+  en: walk_bike_minutes
+  kind: questionnaire
+  dtype: int
+  block: lifestyle
+  label_pt: Minutos por dia desse deslocamento
+  unit: minutos
+  nullable: true
+  null_share_observed: 0.625
+  null_share_max: 0.73
+  domain: {type: numeric, min: 0, max: 59}
+  observed: {min: 0.0, max: 56.0, median: 20.0}
+- pns: P039
+  pt: trab_esforco
+  en: work_physical_effort
+  kind: questionnaire
+  dtype: int
+  block: lifestyle
+  label_pt: Trabalho exige esforço físico intenso
+  unit: null
+  nullable: true
+  null_share_observed: 0.3737
+  null_share_max: 0.47
+  domain:
+    type: categorical
+    values: [1, 2]
+  observed: {mode: 2.0}
+  value_labels_pt: *id001
+- pns: P03901
+  pt: trab_esf_dias
+  en: work_effort_days
+  kind: questionnaire
+  dtype: int
+  block: lifestyle
+  label_pt: Dias por semana de esforço no trabalho
+  unit: dias
+  nullable: true
+  null_share_observed: 0.8046
+  null_share_max: 0.9
+  domain:
+    type: categorical
+    values: [1, 2, 3, 4, 5, 6, 7]
+  observed: {mode: 5.0}
+  value_labels_pt: &id003 {1: 1 dia(s), 2: 2 dia(s), 3: 3 dia(s), 4: 4 dia(s), 5: 5 dia(s), 6: 6 dia(s), 7: 7 dia(s)}
+- pns: P03902
+  pt: trab_esf_horas
+  en: work_effort_hours
+  kind: questionnaire
+  dtype: int
+  block: lifestyle
+  label_pt: Horas por dia de esforço no trabalho
+  unit: horas
+  nullable: true
+  null_share_observed: 0.8046
+  null_share_max: 0.9
+  domain: {type: numeric, min: 0, max: 24}
+  observed: {min: 0.0, max: 16.0, median: 3.0}
+- pns: P03903
+  pt: trab_esf_minutos
+  en: work_effort_minutes
+  kind: questionnaire
+  dtype: int
+  block: lifestyle
+  label_pt: Minutos por dia de esforço no trabalho
+  unit: minutos
+  nullable: true
+  null_share_observed: 0.8046
+  null_share_max: 0.9
+  domain: {type: numeric, min: 0, max: 59}
+  observed: {min: 0.0, max: 59.0, median: 0.0}
+- pns: P040
+  pt: trab_pe_bk
+  en: commute_walk_bike
+  kind: questionnaire
+  dtype: int
+  block: lifestyle
+  label_pt: Vai ao trabalho a pé ou de bicicleta
+  unit: null
+  nullable: true
+  null_share_observed: 0.3737
+  null_share_max: 0.47
+  domain:
+    type: categorical
+    values: [1, 2, 3]
+  observed: {mode: 3.0}
+  value_labels_pt: {1: 'Sim, todo o trajeto', 2: 'Sim, parte do trajeto', 3: Não}
+- pns: P04101
+  pt: trab_pe_bk_horas
+  en: commute_hours
+  kind: questionnaire
+  dtype: int
+  block: lifestyle
+  label_pt: Horas por dia no deslocamento ao trabalho
+  unit: horas
+  nullable: true
+  null_share_observed: 0.7276
+  null_share_max: 0.83
+  domain: {type: numeric, min: 0, max: 24}
+  observed: {min: 0.0, max: 7.0, median: 0.0}
+- pns: P04102
+  pt: trab_pe_bk_minutos
+  en: commute_minutes
+  kind: questionnaire
+  dtype: int
+  block: lifestyle
+  label_pt: Minutos por dia no deslocamento ao trabalho
+  unit: minutos
+  nullable: true
+  null_share_observed: 0.7276
+  null_share_max: 0.83
+  domain: {type: numeric, min: 0, max: 59}
+  observed: {min: 0.0, max: 59.0, median: 15.0}
+- pns: P044
+  pt: atv_dom_esf
+  en: chores_physical_effort
+  kind: questionnaire
+  dtype: int
+  block: lifestyle
+  label_pt: Faz faxina pesada ou atividade doméstica intensa
+  unit: null
+  nullable: false
+  null_share_observed: 0.0
+  null_share_max: 0.0
+  domain:
+    type: categorical
+    values: [1, 2]
+  observed: {mode: 2.0}
+  value_labels_pt: *id001
+- pns: P04401
+  pt: atv_dom_esf_dias
+  en: chores_days
+  kind: questionnaire
+  dtype: int
+  block: lifestyle
+  label_pt: Dias por semana de atividade doméstica intensa
+  unit: dias
+  nullable: true
+  null_share_observed: 0.7993
+  null_share_max: 0.9
+  domain:
+    type: categorical
+    values: [1, 2, 3, 4, 5, 6, 7]
+  observed: {mode: 1.0}
+  value_labels_pt: *id003
+- pns: P04403
+  pt: atv_dom_esf_horas
+  en: chores_hours
+  kind: questionnaire
+  dtype: int
+  block: lifestyle
+  label_pt: Horas por dia de atividade doméstica intensa
+  unit: horas
+  nullable: true
+  null_share_observed: 0.7993
+  null_share_max: 0.9
+  domain: {type: numeric, min: 0, max: 24}
+  observed: {min: 0.0, max: 8.0, median: 3.0}
+- pns: P04404
+  pt: atv_dom_esf_minutos
+  en: chores_minutes
+  kind: questionnaire
+  dtype: int
+  block: lifestyle
+  label_pt: Minutos por dia de atividade doméstica intensa
+  unit: minutos
+  nullable: true
+  null_share_observed: 0.7993
+  null_share_max: 0.9
+  domain: {type: numeric, min: 0, max: 59}
+  observed: {min: 0.0, max: 58.0, median: 0.0}
+- pns: P050
+  pt: fuma_atual
+  en: smokes_currently
+  kind: questionnaire
+  dtype: int
+  block: lifestyle
+  label_pt: Fuma atualmente
+  unit: null
+  nullable: false
+  null_share_observed: 0.0
+  null_share_max: 0.0
+  domain:
+    type: categorical
+    values: [1, 2, 3]
+  observed: {mode: 3.0}
+  value_labels_pt: {1: 'Sim, diariamente', 2: 'Sim, menos que diariamente', 3: Não}
+- pns: P051
+  pt: fumo_rotina_hist
+  en: smoked_daily_past
+  kind: questionnaire
+  dtype: int
+  block: lifestyle
+  label_pt: Já fumou diariamente no passado
+  unit: null
+  nullable: true
+  null_share_observed: 0.9745
+  null_share_max: 1.0
+  domain:
+    type: categorical
+    values: [1, 2]
+  observed: {mode: 1.0}
+  value_labels_pt: *id001
+- pns: P052
+  pt: fumo_hist
+  en: smoked_past
+  kind: questionnaire
+  dtype: int
+  block: lifestyle
+  label_pt: Já fumou no passado
+  unit: null
+  nullable: true
+  null_share_observed: 0.1517
+  null_share_max: 0.25
+  domain:
+    type: categorical
+    values: [1, 2, 3]
+  observed: {mode: 3.0}
+  value_labels_pt: {1: 'Sim, diariamente', 2: 'Sim, menos que diariamente', 3: Não}
+- pns: Q132
+  pt: med_dormir
+  en: sleep_medication
+  kind: questionnaire
+  dtype: int
+  block: health
+  label_pt: Usa medicamento para dormir
+  unit: null
+  nullable: false
+  null_share_observed: 0.0
+  null_share_max: 0.0
+  domain:
+    type: categorical
+    values: [1, 2]
+  observed: {mode: 2.0}
+  value_labels_pt: *id001
+- pns: Z004
+  pt: peso
+  en: weight_kg
+  kind: anthropometry
+  dtype: float
+  block: anthro
+  label_pt: Peso
+  unit: kg
+  nullable: false
+  null_share_observed: 0.0
+  null_share_max: 0.0
+  domain: {type: numeric, min: 25, max: 250}
+  observed: {min: 30.0, max: 179.0, median: 67.3}
+- pns: Z005
+  pt: altura
+  en: height_cm
+  kind: anthropometry
+  dtype: float
+  block: anthro
+  label_pt: Altura
+  unit: cm
+  nullable: false
+  null_share_observed: 0.0
+  null_share_max: 0.0
+  domain: {type: numeric, min: 120, max: 220}
+  observed: {min: 131.0, max: 199.3, median: 162.4}
+- pns: W00303
+  pt: circ_cintura
+  en: waist_cm
+  kind: anthropometry
+  dtype: float
+  block: anthro
+  label_pt: Circunferência da cintura
+  unit: cm
+  nullable: false
+  null_share_observed: 0.0
+  null_share_max: 0.0
+  domain: {type: numeric, min: 40, max: 200}
+  observed: {min: 50.0, max: 141.5, median: 88.5}
+- pns: N001
+  pt: pcp_saude
+  en: self_rated_health
+  kind: questionnaire
+  dtype: int
+  block: health
+  label_pt: Autopercepção do estado de saúde
+  unit: null
+  nullable: false
+  null_share_observed: 0.0
+  null_share_max: 0.0
+  domain:
+    type: categorical
+    values: [1, 2, 3, 4, 5]
+  observed: {mode: 2.0}
+  value_labels_pt: {1: Muito bom, 2: Bom, 3: Regular, 4: Ruim, 5: Muito ruim}
+- pns: N004
+  pt: angina_rapd
+  en: angina_walking_fast
+  kind: questionnaire
+  dtype: int
+  block: health
+  label_pt: Dor no peito ao andar rápido ou subir
+  unit: null
+  nullable: true
+  null_share_observed: 0.0097
+  null_share_max: 0.11
+  domain:
+    type: categorical
+    values: [1, 2, 3]
+  observed: {mode: 2.0}
+  value_labels_pt: {1: Sim, 2: Não, 3: Nunca anda rápido ou sobe ladeira}
+- pns: N005
+  pt: angina_norm
+  en: angina_walking_normal
+  kind: questionnaire
+  dtype: int
+  block: health
+  label_pt: Dor no peito ao andar em ritmo normal
+  unit: null
+  nullable: true
+  null_share_observed: 0.0166
+  null_share_max: 0.12
+  domain:
+    type: categorical
+    values: [1, 2]
+  observed: {mode: 2.0}
+  value_labels_pt: *id001
+- pns: Z026
+  pt: egfr_afro
+  en: egfr_afro
+  kind: laboratory
+  dtype: float
+  block: lab
+  label_pt: Filtração glomerular estimada (afrodescendente)
+  unit: mL/min/1,73 m2
+  nullable: true
+  null_share_observed: 0.1195
+  null_share_max: 0.22
+  domain: {type: numeric, min: 1, max: 600}
+  observed: {min: 4.404612, max: 557.7763, median: 106.4331125}
+- pns: Z031
+  pt: colesterol
+  en: cholesterol
+  kind: laboratory
+  dtype: float
+  block: lab
+  label_pt: Colesterol total
+  unit: mg/dL
+  nullable: true
+  null_share_observed: 0.0392
+  null_share_max: 0.14
+  domain: {type: numeric, min: 40, max: 600}
+  observed: {min: 68.0, max: 433.0, median: 183.0}
+- pns: Z035
+  pt: glicose
+  en: glucose
+  kind: laboratory
+  dtype: float
+  block: lab
+  label_pt: Glicose média estimada
+  unit: mg/dL
+  nullable: true
+  null_share_observed: 0.043
+  null_share_max: 0.14
+  domain: {type: numeric, min: 30, max: 600}
+  observed: {min: 56.046, max: 411.352, median: 105.41}
+intermediate_variables:
+- pt: etnia
+  en: race_color
+  categories: ['1', '2', '3', '4', '5', '9']
+  note: raw race/color code, used as imputation base
+- pt: cintura_risco_aumentado
+  en: waist_risk_increased
+  categories: ['1', '2']
+  note: derived from waist_cm and sex, imputation base only
+- pt: diag_colest_rec
+  en: dx_high_cholesterol_rec
+  categories: ['1', '2', '3']
+  note: dx_high_cholesterol with NaN -> 3, imputation base only
+model_variables:
+- pt: faixa_etaria
+  en: age_group
+  label_pt: Faixa etária
+  categories: [18-29, 30-39, 40-49, 50-59, 60-69, 70-79, 80+]
+  reference_category: 18-29
+  source_raw: [age]
+  dummies:
+  - {en: age_group_30-39, notebook_name: faixa_etaria_30-39, category: 30-39}
+  - {en: age_group_40-49, notebook_name: faixa_etaria_40-49, category: 40-49}
+  - {en: age_group_50-59, notebook_name: faixa_etaria_50-59, category: 50-59}
+  - {en: age_group_60-69, notebook_name: faixa_etaria_60-69, category: 60-69}
+  - {en: age_group_70-79, notebook_name: faixa_etaria_70-79, category: 70-79}
+  - {en: age_group_80+, notebook_name: faixa_etaria_80+, category: 80+}
+- pt: sexo
+  en: sex
+  label_pt: Sexo
+  categories: ['1', '2']
+  reference_category: '1'
+  source_raw: [sex]
+  dummies:
+  - {en: sex_2, notebook_name: sexo_2, category: '2'}
+- pt: regiao
+  en: region
+  label_pt: Região
+  categories: ['1', '2', '3', '4', '5']
+  reference_category: '1'
+  source_raw: [region]
+  dummies:
+  - {en: region_2, notebook_name: regiao_2.0, category: '2'}
+  - {en: region_3, notebook_name: regiao_3.0, category: '3'}
+  - {en: region_4, notebook_name: regiao_4.0, category: '4'}
+  - {en: region_5, notebook_name: regiao_5.0, category: '5'}
+- pt: etnia_negra
+  en: black_or_brown
+  label_pt: Cor preta ou parda
+  categories: ['1', '2']
+  reference_category: '1'
+  source_raw: [race_color]
+  dummies:
+  - {en: black_or_brown_2, notebook_name: etnia_negra_2, category: '2'}
+- pt: faixa_num_mor
+  en: household_size_group
+  label_pt: Faixa de moradores
+  categories: ['1', '2', '3', '4', '5', 6+]
+  reference_category: '1'
+  source_raw: [household_size]
+  dummies:
+  - {en: household_size_group_2, notebook_name: faixa_num_mor_2, category: '2'}
+  - {en: household_size_group_3, notebook_name: faixa_num_mor_3, category: '3'}
+  - {en: household_size_group_4, notebook_name: faixa_num_mor_4, category: '4'}
+  - {en: household_size_group_5, notebook_name: faixa_num_mor_5, category: '5'}
+  - {en: household_size_group_6+, notebook_name: faixa_num_mor_6+, category: 6+}
+- pt: conj_comp
+  en: lives_with_spouse
+  label_pt: Vive com cônjuge
+  categories: ['1', '2']
+  reference_category: '1'
+  source_raw: [lives_with_spouse]
+  dummies:
+  - {en: lives_with_spouse_2, notebook_name: conj_comp_2, category: '2'}
+- pt: faixa_renda_sl
+  en: income_bracket
+  label_pt: Faixa de renda em salários mínimos
+  categories: ['1', '2', '3', '4', '5', '6', '7', '8', '9']
+  reference_category: '1'
+  source_raw: [income_main_job, income_main_job_in_kind, income_other_jobs, income_other_jobs_in_kind, income_pension,
+    income_alimony, income_rent]
+  dummies:
+  - {en: income_bracket_2, notebook_name: faixa_renda_sl_2, category: '2'}
+  - {en: income_bracket_3, notebook_name: faixa_renda_sl_3, category: '3'}
+  - {en: income_bracket_4, notebook_name: faixa_renda_sl_4, category: '4'}
+  - {en: income_bracket_5, notebook_name: faixa_renda_sl_5, category: '5'}
+  - {en: income_bracket_6, notebook_name: faixa_renda_sl_6, category: '6'}
+  - {en: income_bracket_7, notebook_name: faixa_renda_sl_7, category: '7'}
+  - {en: income_bracket_8, notebook_name: faixa_renda_sl_8, category: '8'}
+  - {en: income_bracket_9, notebook_name: faixa_renda_sl_9, category: '9'}
+- pt: plano_saude
+  en: health_insurance
+  label_pt: Plano de saúde
+  categories: ['1', '2']
+  reference_category: '1'
+  source_raw: [health_insurance]
+  dummies:
+  - {en: health_insurance_2, notebook_name: plano_saude_2, category: '2'}
+- pt: diag_renalc
+  en: dx_chronic_kidney
+  label_pt: Insuficiência renal crônica
+  categories: ['1', '2']
+  reference_category: '1'
+  source_raw: [dx_chronic_kidney]
+  dummies:
+  - {en: dx_chronic_kidney_2, notebook_name: diag_renalc_2.0, category: '2'}
+- pt: diag_diab_rec
+  en: dx_diabetes_rec
+  label_pt: Diabetes (recodificado)
+  categories: ['1', '2', '3']
+  reference_category: '1'
+  source_raw: [dx_diabetes]
+  dummies:
+  - {en: dx_diabetes_rec_2, notebook_name: diag_diab_rec_2.0, category: '2'}
+  - {en: dx_diabetes_rec_3, notebook_name: diag_diab_rec_3.0, category: '3'}
+- pt: diag_dcore
+  en: dx_heart_disease
+  label_pt: Doença do coração
+  categories: ['1', '2']
+  reference_category: '1'
+  source_raw: [dx_heart_disease]
+  dummies:
+  - {en: dx_heart_disease_2, notebook_name: diag_dcore_2.0, category: '2'}
+- pt: diag_avc
+  en: dx_stroke
+  label_pt: AVC
+  categories: ['1', '2']
+  reference_category: '1'
+  source_raw: [dx_stroke]
+  dummies:
+  - {en: dx_stroke_2, notebook_name: diag_avc_2.0, category: '2'}
+- pt: feijao_consumo
+  en: beans_intake
+  label_pt: Consumo de feijão
+  categories: ['1', '2', '3', '4']
+  reference_category: '1'
+  source_raw: [beans_days]
+  dummies:
+  - {en: beans_intake_2, notebook_name: feijao_consumo_2, category: '2'}
+  - {en: beans_intake_3, notebook_name: feijao_consumo_3, category: '3'}
+  - {en: beans_intake_4, notebook_name: feijao_consumo_4, category: '4'}
+- pt: salada_consumo
+  en: salad_intake
+  label_pt: Consumo de salada
+  categories: ['1', '2', '3', '4']
+  reference_category: '1'
+  source_raw: [salad_days]
+  dummies:
+  - {en: salad_intake_2, notebook_name: salada_consumo_2, category: '2'}
+  - {en: salad_intake_3, notebook_name: salada_consumo_3, category: '3'}
+  - {en: salad_intake_4, notebook_name: salada_consumo_4, category: '4'}
+- pt: verd_legu_consumo
+  en: vegetables_intake
+  label_pt: Consumo de verduras e legumes
+  categories: ['1', '2', '3', '4']
+  reference_category: '1'
+  source_raw: [vegetables_days]
+  dummies:
+  - {en: vegetables_intake_2, notebook_name: verd_legu_consumo_2, category: '2'}
+  - {en: vegetables_intake_3, notebook_name: verd_legu_consumo_3, category: '3'}
+  - {en: vegetables_intake_4, notebook_name: verd_legu_consumo_4, category: '4'}
+- pt: peixe_consumo
+  en: fish_intake
+  label_pt: Consumo de peixe
+  categories: ['1', '2', '3', '4']
+  reference_category: '1'
+  source_raw: [fish_days]
+  dummies:
+  - {en: fish_intake_2, notebook_name: peixe_consumo_2, category: '2'}
+  - {en: fish_intake_3, notebook_name: peixe_consumo_3, category: '3'}
+  - {en: fish_intake_4, notebook_name: peixe_consumo_4, category: '4'}
+- pt: suco_consumo
+  en: juice_intake
+  label_pt: Consumo de suco natural
+  categories: ['1', '2', '3', '4']
+  reference_category: '1'
+  source_raw: [juice_days]
+  dummies:
+  - {en: juice_intake_2, notebook_name: suco_consumo_2, category: '2'}
+  - {en: juice_intake_3, notebook_name: suco_consumo_3, category: '3'}
+  - {en: juice_intake_4, notebook_name: suco_consumo_4, category: '4'}
+- pt: frutas_consumo
+  en: fruit_intake
+  label_pt: Consumo de frutas
+  categories: ['1', '2', '3', '4']
+  reference_category: '1'
+  source_raw: [fruit_days]
+  dummies:
+  - {en: fruit_intake_2, notebook_name: frutas_consumo_2, category: '2'}
+  - {en: fruit_intake_3, notebook_name: frutas_consumo_3, category: '3'}
+  - {en: fruit_intake_4, notebook_name: frutas_consumo_4, category: '4'}
+- pt: tipo_refri_rec
+  en: soda_type_rec
+  label_pt: Tipo de refrigerante (recodificado)
+  categories: ['1', '2', '3', '4']
+  reference_category: '1'
+  source_raw: [soda_type]
+  dummies:
+  - {en: soda_type_rec_2, notebook_name: tipo_refri_rec_2.0, category: '2'}
+  - {en: soda_type_rec_3, notebook_name: tipo_refri_rec_3.0, category: '3'}
+  - {en: soda_type_rec_4, notebook_name: tipo_refri_rec_4.0, category: '4'}
+- pt: tipo_leite_rec
+  en: milk_type_rec
+  label_pt: Tipo de leite (recodificado)
+  categories: ['1', '2', '3', '4']
+  reference_category: '1'
+  source_raw: [milk_type]
+  dummies:
+  - {en: milk_type_rec_2, notebook_name: tipo_leite_rec_2.0, category: '2'}
+  - {en: milk_type_rec_3, notebook_name: tipo_leite_rec_3.0, category: '3'}
+  - {en: milk_type_rec_4, notebook_name: tipo_leite_rec_4.0, category: '4'}
+- pt: doces_consumo
+  en: sweets_intake
+  label_pt: Consumo de doces
+  categories: ['1', '2', '3', '4']
+  reference_category: '1'
+  source_raw: [sweets_days]
+  dummies:
+  - {en: sweets_intake_2, notebook_name: doces_consumo_2, category: '2'}
+  - {en: sweets_intake_3, notebook_name: doces_consumo_3, category: '3'}
+  - {en: sweets_intake_4, notebook_name: doces_consumo_4, category: '4'}
+- pt: freq_subst_ref
+  en: meal_replacement_freq
+  label_pt: Substituição de refeição por lanche
+  categories: ['1', '2', '3', '4']
+  reference_category: '1'
+  source_raw: [meal_replacement_days]
+  dummies:
+  - {en: meal_replacement_freq_2, notebook_name: freq_subst_ref_2, category: '2'}
+  - {en: meal_replacement_freq_3, notebook_name: freq_subst_ref_3, category: '3'}
+  - {en: meal_replacement_freq_4, notebook_name: freq_subst_ref_4, category: '4'}
+- pt: consumo_sal_rec
+  en: salt_intake_rec
+  label_pt: Consumo de sal (recodificado)
+  categories: ['1', '2', '3']
+  reference_category: '1'
+  source_raw: [salt_intake]
+  dummies:
+  - {en: salt_intake_rec_2, notebook_name: consumo_sal_rec_2, category: '2'}
+  - {en: salt_intake_rec_3, notebook_name: consumo_sal_rec_3, category: '3'}
+- pt: alcool
+  en: alcohol
+  label_pt: Bebida alcoólica
+  categories: ['1', '2', '3']
+  reference_category: '1'
+  source_raw: [alcohol]
+  dummies:
+  - {en: alcohol_2, notebook_name: alcool_2.0, category: '2'}
+  - {en: alcohol_3, notebook_name: alcool_3.0, category: '3'}
+- pt: nivel_atv_fisica
+  en: physical_activity_level
+  label_pt: Nível de atividade física
+  categories: ['1', '2', '3', '4']
+  reference_category: '1'
+  source_raw: [exercise, exercise_days, exercise_type, walk_bike_days, walk_bike_hours, walk_bike_minutes, work_physical_effort,
+    work_effort_days, work_effort_hours, work_effort_minutes, commute_walk_bike, commute_hours, commute_minutes,
+    chores_physical_effort, chores_days, chores_hours, chores_minutes]
+  dummies:
+  - {en: physical_activity_level_2, notebook_name: nivel_atv_fisica_2, category: '2'}
+  - {en: physical_activity_level_3, notebook_name: nivel_atv_fisica_3, category: '3'}
+  - {en: physical_activity_level_4, notebook_name: nivel_atv_fisica_4, category: '4'}
+- pt: fumante_hist
+  en: smoking_history
+  label_pt: Histórico de tabagismo
+  categories: ['1', '2']
+  reference_category: '1'
+  source_raw: [smokes_currently, smoked_daily_past, smoked_past]
+  dummies:
+  - {en: smoking_history_2, notebook_name: fumante_hist_2, category: '2'}
+- pt: med_dormir
+  en: sleep_medication
+  label_pt: Medicamento para dormir
+  categories: ['1', '2']
+  reference_category: '1'
+  source_raw: [sleep_medication]
+  dummies:
+  - {en: sleep_medication_2, notebook_name: med_dormir_2.0, category: '2'}
+- pt: class_imc
+  en: bmi_class
+  label_pt: Classificação do IMC
+  categories: ['1', '2', '3', '4', '5']
+  reference_category: '1'
+  source_raw: [weight_kg, height_cm]
+  dummies:
+  - {en: bmi_class_2, notebook_name: class_imc_2, category: '2'}
+  - {en: bmi_class_3, notebook_name: class_imc_3, category: '3'}
+  - {en: bmi_class_4, notebook_name: class_imc_4, category: '4'}
+  - {en: bmi_class_5, notebook_name: class_imc_5, category: '5'}
+- pt: pcp_saude_rec
+  en: self_rated_health_rec
+  label_pt: Autopercepção de saúde (recodificado)
+  categories: ['1', '2']
+  reference_category: '1'
+  source_raw: [self_rated_health]
+  dummies:
+  - {en: self_rated_health_rec_2, notebook_name: pcp_saude_rec_2, category: '2'}
+- pt: angina
+  en: angina
+  label_pt: Angina
+  categories: ['1', '2']
+  reference_category: '1'
+  source_raw: [angina_walking_fast, angina_walking_normal]
+  dummies:
+  - {en: angina_2, notebook_name: angina_2, category: '2'}
+- pt: cat_egfr_afro
+  en: egfr_class
+  label_pt: Classe de filtração glomerular
+  categories: ['1', '2', '3', '4', '5']
+  reference_category: '1'
+  source_raw: [egfr_afro]
+  dummies:
+  - {en: egfr_class_2, notebook_name: cat_egfr_afro_2, category: '2'}
+  - {en: egfr_class_3, notebook_name: cat_egfr_afro_3, category: '3'}
+  - {en: egfr_class_4, notebook_name: cat_egfr_afro_4, category: '4'}
+  - {en: egfr_class_5, notebook_name: cat_egfr_afro_5, category: '5'}
+- pt: cat_glicose
+  en: glucose_class
+  label_pt: Classe de glicose
+  categories: ['1', '2', '3', '4']
+  reference_category: '1'
+  source_raw: [glucose]
+  dummies:
+  - {en: glucose_class_2, notebook_name: cat_glicose_2, category: '2'}
+  - {en: glucose_class_3, notebook_name: cat_glicose_3, category: '3'}
+  - {en: glucose_class_4, notebook_name: cat_glicose_4, category: '4'}
+- pt: colesterol_ideal
+  en: cholesterol_desirable
+  label_pt: Colesterol desejável
+  categories: ['1', '2']
+  reference_category: '1'
+  source_raw: [cholesterol]
+  dummies:
+  - {en: cholesterol_desirable_2, notebook_name: colesterol_ideal_2, category: '2'}

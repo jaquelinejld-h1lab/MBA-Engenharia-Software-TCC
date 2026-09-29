@@ -1,0 +1,29 @@
+# requirements-api.lock
+# Dependencias de RUNTIME da API (Dockerfile.api). Nao contem bibliotecas de
+# treino: catboost, lightgbm, xgboost, boruta, optuna, shap e seaborn sao
+# proibidos aqui (instrucoes do projeto). SHAP para explicabilidade local e
+# reavaliado na etapa 5 com ADR, porque o TreeExplainer nao se aplica a LR.
+#
+# [VERSAO] Pins diretos definidos na etapa 1 sem acesso ao PyPI. Antes do
+# primeiro push, regenerar o grafo completo com hashes na maquina de
+# desenvolvimento:
+#   pip install pip-tools==7.4.1
+#   pip-compile --generate-hashes --strip-extras -o requirements-api.lock requirements-api.in
+# O CI instala a partir deste arquivo; ele funciona nos dois estados.
+#
+# Python 3.11 (mesma versao maior/menor do notebook original, 3.11.7).
+numpy==1.26.4
+pandas==2.2.3
+scikit-learn==1.5.2
+scipy==1.13.1
+joblib==1.4.2
+pyarrow==17.0.0
+openpyxl==3.1.5
+pydantic==2.9.2
+pydantic-settings==2.6.1
+PyYAML==6.0.2
+fastapi==0.115.5
+uvicorn==0.32.1
+prometheus-client==0.21.0
+mlflow-skinny==2.17.2
+httpx==0.27.2

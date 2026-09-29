@@ -1,0 +1,23 @@
+# Contexto de build das tres imagens (docker/Dockerfile.*). Fica na raiz porque o
+# Docker so le o .dockerignore na raiz do contexto; sem ele, .venv, mlruns e
+# artifacts iriam para o daemon a cada build.
+.git
+.venv
+venv
+__pycache__
+*.pyc
+.mypy_cache
+.ruff_cache
+.pytest_cache
+.hypothesis
+data/interim
+data/processed
+data/raw/*.xlsx
+notebooks
+evidencias
+mlruns
+artifacts
+tests
+docs
+docker/prometheus
+docker/grafana

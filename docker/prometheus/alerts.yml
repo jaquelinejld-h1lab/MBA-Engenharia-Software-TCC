@@ -1,0 +1,37 @@
+# Regras de alerta acionaveis (runbook em docs/runbook.md). Limiares alinhados a
+# configs/config.yaml: acceptance.slo_p95_latency_ms = 300, drift em data_drift_alert.
+groups:
+  - name: hypertension-api
+    rules:
+      - alert: ApiHighLatencyP95
+        expr: histogram_quantile(0.95, sum(rate(api_request_latency_seconds_bucket{endpoint="/predict"}[5m])) by (le)) > 0.3
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "p95 de /predict acima do SLO de 300 ms por 5 min"
+          runbook: "docs/runbook.md#latencia"
+      - alert: ApiHighErrorRate
+        expr: sum(rate(api_requests_total{status=~"5.."}[5m])) / sum(rate(api_requests_total[5m])) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Mais de 5 % das requisicoes com erro 5xx"
+          runbook: "docs/runbook.md#erros"
+      - alert: DataDriftDetected
+        expr: data_drift_alerts > 0
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $value }} variavel(is) em alerta de drift (PSI/KS)"
+          runbook: "docs/runbook.md#drift"
+      - alert: ApiDown
+        expr: up{job="hypertension-api"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "API fora do ar"
+          runbook: "docs/runbook.md#api-fora-do-ar"

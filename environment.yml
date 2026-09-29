@@ -1,0 +1,16 @@
+# Ambiente conda para a maquina de desenvolvimento (Windows).
+# Uso:
+#   conda env create -f environment.yml
+#   conda activate hypertension-mlops
+# As dependencias Python vem exclusivamente dos arquivos .lock, para que o
+# ambiente local e a imagem Docker resolvam o mesmo grafo.
+name: hypertension-mlops
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11.9
+  - pip=24.2
+  - pip:
+      - -r requirements-train.lock
+      - -r requirements-dev.lock
+      - -e .

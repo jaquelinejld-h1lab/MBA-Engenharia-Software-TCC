@@ -1,0 +1,140 @@
+# Pilha local completa: API, interface, MLflow, Prometheus e Grafana.
+#
+#   docker compose -f docker/docker-compose.yml up --build -d
+#   API        http://localhost:8000/docs
+#   Interface  http://localhost:8501
+#   MLflow     http://localhost:5000
+#   Prometheus http://localhost:9090
+#   Grafana    http://localhost:3000  (admin / senha em GRAFANA_ADMIN_PASSWORD, padrao "admin")
+#
+# Contexto de build e a raiz do repositorio. Modelo servido a partir de
+# artifacts/lr_production (montado somente leitura). O servico mlflow expoe a
+# UI sobre o mesmo store SQLite usado no treino (mlruns/mlflow.db).
+#
+# Caminhos do MLflow: o treino grava a localizacao dos artefatos como URI absoluta
+# (file:///<raiz>/mlruns/artifacts). Todos os servicos montam a raiz do repositorio
+# em /app, inclusive o servico "train" e o servidor mlflow, para que essa URI seja a
+# mesma em todos os containers. Consequencia: runs treinadas pelo servico "train"
+# (caminho A do README) sao legiveis pela UI do MLflow e pela API com
+# HTN_API__MODEL_SOURCE=mlflow; runs treinadas com Python no host (caminho B) ficam
+# com URI do host e so sao servidas pela API executada no host.
+# Nenhuma credencial fica no arquivo: senha do Grafana vem do ambiente
+# (.env ou export) com padrao apenas para uso local.
+
+name: hypertension-mlops
+
+services:
+  # Ferramenta, nao servico: nao sobe com "up". Executa o pipeline, os testes e as
+  # ferramentas de qualidade dentro do container, com o repositorio montado em /app.
+  #   docker compose -f docker/docker-compose.yml --profile tools run --rm train
+  #   docker compose -f docker/docker-compose.yml --profile tools run --rm train pytest -q
+  # Em Linux, acrescente --user "$(id -u):$(id -g)" para que os arquivos gerados em
+  # artifacts/ e evidencias/ pertencam ao seu usuario e nao ao root.
+  train:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.train
+    image: hypertension-train:latest
+    profiles: ["tools"]
+    working_dir: /app
+    environment:
+      HTN_LOGGING__JSON_FORMAT: "false"
+    volumes:
+      # Repositorio inteiro: o codigo editado no host vale imediatamente, e o que o
+      # pipeline escreve (artifacts/, mlruns/, evidencias/) aparece no host.
+      - ..:/app
+    # Sem --no-docker o script tentaria construir imagens de dentro do container.
+    command: ["python", "scripts/run_pipeline.py", "--no-docker"]
+
+  api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.api
+    image: hypertension-api:latest
+    environment:
+      HTN_API__MODEL_SOURCE: ${HTN_API__MODEL_SOURCE:-local}
+      HTN_LOGGING__JSON_FORMAT: "true"
+      # Mais workers multiplicam o throughput (~30 req/s por worker), mas cada
+      # processo tem a propria janela de drift e o proprio registro de metricas;
+      # o painel e o Prometheus passam a ver amostras parciais. Padrao: 1.
+      UVICORN_WORKERS: ${UVICORN_WORKERS:-1}
+    volumes:
+      - ../artifacts:/app/artifacts:ro
+      - ../mlruns:/app/mlruns:ro
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3).status == 200 else 1)"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    restart: unless-stopped
+
+  app:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.app
+    image: hypertension-app:latest
+    environment:
+      HTN_APP__API_URL: http://api:8000
+      HTN_APP__PROMETHEUS_URL: http://prometheus:9090
+    ports:
+      - "8501:8501"
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
+  mlflow:
+    # Mesma versao travada em requirements-train.lock; a imagem oficial evita
+    # construir uma segunda imagem so para o servidor de tracking.
+    image: ghcr.io/mlflow/mlflow:v2.17.2
+    command: >
+      mlflow server
+      --host 0.0.0.0 --port 5000
+      --backend-store-uri sqlite:////app/mlruns/mlflow.db
+      --default-artifact-root /app/mlruns/artifacts
+      --serve-artifacts
+    volumes:
+      # Mesmo caminho /app/mlruns usado pelo treino em container e pela API.
+      - ../mlruns:/app/mlruns
+    ports:
+      - "5000:5000"
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=7d
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro
+      - prometheus-data:/prometheus
+    ports:
+      - "9090:9090"
+    depends_on:
+      - api
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana-oss:11.3.0
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
+volumes:
+  prometheus-data:
+  grafana-data:

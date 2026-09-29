@@ -1,0 +1,60 @@
+# syntax=docker/dockerfile:1.7
+# Imagem da API de predicao. Multi-stage: o builder resolve as dependencias de
+# runtime (somente requirements-api.lock) em um venv; a imagem final e slim,
+# roda como usuario nao root e nao contem compiladores nem bibliotecas de treino.
+#
+# Build (na raiz do repositorio):
+#   docker build -f docker/Dockerfile.api -t hypertension-api:latest .
+# Run (modelo local, promovido por `python -m src.models.train --all`):
+#   docker run --rm -p 8000:8000 -v "$PWD/artifacts:/app/artifacts:ro" hypertension-api:latest
+# Run (modelo do registry do MLflow, montando o store SQLite):
+#   docker run --rm -p 8000:8000 -e HTN_API__MODEL_SOURCE=mlflow \
+#     -v "$PWD/mlruns:/app/mlruns:ro" hypertension-api:latest
+
+ARG PYTHON_VERSION=3.11
+
+# ------------------------------------------------------------------ builder
+FROM python:${PYTHON_VERSION}-slim AS builder
+
+ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PYTHONDONTWRITEBYTECODE=1
+
+WORKDIR /build
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:${PATH}"
+
+COPY requirements-api.lock ./
+RUN pip install --upgrade pip && pip install -r requirements-api.lock
+
+COPY pyproject.toml README.md LICENSE ./
+COPY src ./src
+RUN pip install --no-deps .
+
+# ------------------------------------------------------------------ runtime
+FROM python:${PYTHON_VERSION}-slim AS runtime
+
+ENV PATH="/opt/venv/bin:${PATH}" \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    HTN_LOGGING__JSON_FORMAT=true
+
+# Usuario nao root com home proprio; nenhum segredo e copiado para a imagem.
+RUN groupadd --system app && useradd --system --gid app --create-home app
+
+WORKDIR /app
+COPY --from=builder /opt/venv /opt/venv
+COPY --chown=app:app configs ./configs
+COPY --chown=app:app src ./src
+# Diretorios montados em tempo de execucao (modelo local ou store do MLflow).
+RUN mkdir -p /app/artifacts /app/mlruns && chown -R app:app /app
+
+USER app
+EXPOSE 8000
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+    CMD python -c "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3).status == 200 else 1)"
+
+ENV UVICORN_WORKERS=1
+# Forma shell apenas para expandir UVICORN_WORKERS; nenhum outro dado do ambiente e interpolado.
+CMD uvicorn src.api.main:app --host 0.0.0.0 --port 8000 --workers "${UVICORN_WORKERS}"

@@ -1,0 +1,52 @@
+# syntax=docker/dockerfile:1.7
+# Imagem de TREINO e desenvolvimento: executa o pipeline completo, a suite de testes e
+# as ferramentas de qualidade sem exigir Python instalado na maquina do usuario.
+#
+# Diferenca para Dockerfile.api e Dockerfile.app: esta imagem NAO copia o codigo. O
+# repositorio e montado em /app em tempo de execucao (bind mount), de modo que editar
+# um arquivo no host tem efeito imediato, sem rebuild. A imagem carrega apenas o
+# ambiente Python travado.
+#
+# Build (na raiz do repositorio):
+#   docker build -f docker/Dockerfile.train -t hypertension-train:latest .
+# Uso (preferir o servico "train" do docker-compose.yml, que ja monta os volumes):
+#   docker run --rm -v "${PWD}:/app" hypertension-train:latest python scripts/run_pipeline.py --no-docker
+#
+# [INCERTEZA] Esta imagem foi escrita sem daemon Docker disponivel na sessao de
+# desenvolvimento; a construcao e validada pelo job "docker" do CI a cada push.
+
+ARG PYTHON_VERSION=3.11
+
+FROM python:${PYTHON_VERSION}-slim
+
+ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    # O codigo e importado como pacote "src" a partir da raiz montada; nao ha
+    # "pip install -e ." para que o bind mount seja a unica fonte do codigo.
+    PYTHONPATH=/app \
+    # Escritos por usuarios sem home propria quando se usa --user em Linux.
+    HOME=/tmp \
+    MPLCONFIGDIR=/tmp/matplotlib
+
+# libgomp1: runtime OpenMP exigido por LightGBM, XGBoost e CatBoost.
+# git: src/models/registry.py registra a revisao do codigo em cada run (OE2).
+# make: alvos do Makefile (lock, check) executaveis de dentro do container.
+RUN apt-get update \
+    && apt-get install --no-install-recommends --yes libgomp1 git make \
+    && rm -rf /var/lib/apt/lists/*
+
+# O repositorio montado pertence ao usuario do host; sem isto o git recusa a leitura
+# com "detected dubious ownership" e a revisao seria registrada como "unknown".
+RUN git config --system --add safe.directory /app
+
+WORKDIR /app
+
+COPY requirements-api.lock requirements-train.lock requirements-dev.lock ./
+RUN pip install --upgrade pip \
+    && pip install -r requirements-train.lock -r requirements-dev.lock
+
+# Sem CMD util: o comando vem do compose ou da linha de comando. Um shell interativo
+# e o padrao mais previsivel para uma imagem de ferramentas.
+CMD ["bash"]

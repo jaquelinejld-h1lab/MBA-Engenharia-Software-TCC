@@ -1,0 +1,13 @@
+# Dependencias diretas; fonte para pip-compile (ver cabecalho do .lock correspondente).
+# Ambiente de TREINO e de desenvolvimento local. Superconjunto de requirements-api.in
+# mais as bibliotecas de modelagem comparativa, tracking completo e interface.
+#
+# Regra: so entra aqui o que o repositorio realmente importa. Bibliotecas usadas pelo
+# notebook original e descartadas na produtizacao ficam de fora (ver cabecalho do .lock).
+-r requirements-api.in
+mlflow==2.17.2
+xgboost==2.1.2
+lightgbm==4.5.0
+catboost==1.2.7
+matplotlib==3.9.2
+streamlit==1.40.1

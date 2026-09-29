@@ -1,0 +1,13 @@
+# Dependencias diretas; fonte para pip-compile (ver cabecalho do .lock correspondente).
+ruff==0.7.4
+black==24.10.0
+mypy==1.13.0
+bandit==1.7.10
+pip-audit==2.7.3
+pytest==8.3.3
+pytest-cov==6.0.0
+hypothesis==6.119.4
+schemathesis==3.38.5
+pip-tools==7.4.1
+types-PyYAML==6.0.12.20240917
+psutil==6.1.0

@@ -1,0 +1,56 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.eggs/
+
+# Ambientes
+.venv/
+venv/
+env/
+.conda/
+
+# Ferramentas
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.hypothesis/
+.coverage
+.coverage.*
+htmlcov/
+
+# Segredos e configuracao local
+.env
+.env.*
+!.env.example
+
+# Dados derivados (o bruto em data/raw e versionado por decisao de projeto)
+data/interim/*
+data/processed/*
+!data/interim/.gitkeep
+!data/processed/.gitkeep
+
+# Relatorios gerados no CI
+evidencias/coverage.xml
+evidencias/coverage_summary.txt
+evidencias/data_quality_*.json
+
+# MLflow e artefatos de modelo
+mlruns/
+*.db
+mlartifacts/
+artifacts/
+
+# Notebooks: saidas de execucao exploratoria
+notebooks/**/.ipynb_checkpoints/
+
+# Sistema
+.DS_Store
+Thumbs.db
+*.log
+
+# Logs de execucao gerados por bibliotecas de modelo
+catboost_info/
+lightning_logs/
